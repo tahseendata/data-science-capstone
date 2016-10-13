@@ -1,0 +1,211 @@
+---
+title: "Milestone Report Coursera Data Science Capstone"
+author: "Jose Antonio (joseantonio@me.com"
+date: "10/11/2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1-INTRODUCTION
+
+This Milestone Report is about exploratory data analysis of the Capstone Project of the Data Science Coursera specialization.
+Coursera and SwitfKey are partnering at this project, that apply data science in area of natural language.
+The project use a large text corpus of documents to predict the next word on preceding input.  
+The data will be extracted and cleaned from these documents to be used with Shiny application.
+Here, we have some informations about the corpus of data and prepare a plan to create the predictive model.
+
+## 2-R LIBRARIES
+
+Some R libraries used at this project.
+
+```{r, echo=TRUE}
+library(stringi) # stats files
+library(NLP); library(openNLP)
+library(tm) # Text mining
+library(rJava)
+library(RWeka) # to create unigrams, bigrams, trigrams
+library(RWekajars)
+library(SnowballC) # Stemming
+library(qdap); library(qdapTools); library(qdapRegex); library(qdapDictionaries)
+library(ggplot2) #visualization
+library(RColorBrewer) # Color palettes
+library(wordcloud) # word cloud generator (not used)
+library(ngramrr)
+library(magrittr)
+
+## in study
+library(quanteda) # faster cleaning/processing than RWeka or tm packages, can also creat n-grams in the same call.  
+
+```
+
+## 3 - LOOKING FOR THE DATA 
+The data is from HC Corpora with access to 4 languages, but only English will be used. The dataset has 3 files.
+
+ * en_US.blogs.txt
+ * en_US.news.txt
+ * en_US.twitter.txt.
+
+The data was loaded from Coursera Link to local machine and will be read from local disk. 
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+blogsURL <- file("~/Desktop/DATA-SCIENCE-CAPSTONE/en_US.blogs.txt", open="rb") # open for reading in binary mode
+blogs <- readLines(blogsURL, encoding = "UTF-8", skipNul=TRUE)
+
+newsURL <- file("~/Desktop/DATA-SCIENCE-CAPSTONE/en_US.news.txt", open = "rb") # open for reading in binary mode
+news <- readLines(newsURL, encoding = "UTF-8", skipNul=TRUE)
+
+twitterURL <- file("~/Desktop/DATA-SCIENCE-CAPSTONE/en_US.twitter.txt", open = "rb") # open for reading in binary mode
+twitter <- readLines(twitterURL, encoding = "UTF-8", skipNul=TRUE)
+
+rm(blogsURL, newsURL, twitterURL)
+```
+
+## 4 - SOME DATA STATISTICS
+
+Lets evaluate the Data loaded with
+
+```{r, echo=TRUE}
+## Size of Files
+file.info("~/Desktop/DATA-SCIENCE-CAPSTONE/en_US.blogs.txt")$size / 1024^2 # Megabytes
+file.info("~/Desktop/DATA-SCIENCE-CAPSTONE/en_US.news.txt")$size  / 1024^2 # Megabytes
+file.info("~/Desktop/DATA-SCIENCE-CAPSTONE/en_US.twitter.txt")$size / 1024^2 # Megabytes
+
+## Number of lines
+length(blogs) # 899,288 lines
+length(news)  # 1,010,242 lines
+length(twitter) # 2,360,148
+
+## Counting the Words
+sum(stri_count_words(blogs)) # words at blogs = 37,546,246
+sum(stri_count_words(news))  # words at news =  34,762,395
+sum(stri_count_words(twitter)) # words at twitter = 30,093,410
+
+## The length of the longest line seen in any of the three en_US data sets: (question 3 of Quiz 1)
+max(nchar(blogs)) # [1] 40,833
+max(nchar(news))  # [1] 11,384 
+max(nchar(twitter)) # [1] 140
+```
+
+
+### 4.1 - DATA SUMMARY OBSERVED
+
+* Each file has more than 150 MB.
+* The number of words is more than 30 million per file.
+* Twitter is the big file with more lines, and less words per line (as expected 140 lines limited).
+* Blogs are text file with sentences and has the longest line with 40,833 characters.
+* News are text file with senteces.
+* Twitter are text file with sentences until 140 characters as would expected and with 2,360,148 number of lines.
+
+
+## 5 - DATA SAMPLE (subset)
+
+To make the analyse and prediction, the data is very large, and could have poor perfomance in mobile.
+So, we must create a subset of the data considering the limited resources for test and application.
+A data sample was generated from the three files observed.
+
+
+```{r, eval=FALSE}
+sTwitter <- sample(twitter, size = 5000, replace = TRUE)
+sBlogs <- sample(blogs, size = 5000, replace = TRUE)
+sNews <- sample(news, size = 5000, replace = TRUE)
+sampleTotal <- c(sTwitter, sBlogs, sNews)
+length(sampleTotal)
+rm(sBlogs, sNews, sTwitter)
+rm(blogs, news, twitter)
+```
+
+The Sample chooses has 15,000 lines, 5,000 from each of the files.
+
+```{r, eval=FALSE, echo=FALSE}
+## Saving the Sample Total
+writeLines(sampleTotal, "~/Desktop/DATA-SCIENCE-CAPSTONE/sampleTotal.txt")
+rm(sampleTotal)
+```
+
+
+## 6 - CORPUS AND CLEANING THE DATA
+
+The final text data needs to be cleaned to be used at the word prediction.
+The objective is to create a cleaned Corpus file or sample of text. 
+This Corpus will be cleaned using methods as removing whitespaces, removing numbers, UTR, punctuation and so on.
+The library used here is TM that loads the corpus into memory and allow calls to the methods to clean the data.
+
+Profanity words have to be erased from the dataset.
+
+### 6.1 - Clean the Data
+```{r, eval=FALSE, echo=TRUE}
+## Using the TM Package to clean the Corpus Text
+textCon <- file("~/Desktop/DATA-SCIENCE-CAPSTONE/sampleTotal.txt")
+textCorpus <- readLines(textCon)
+## Tm readin the text as lists.
+textCorpus <- Corpus(VectorSource(textCorpus))
+rm(textCon)
+
+## Using the TM Package to clean the text
+textCorpus <- tm_map(textCorpus, content_transformer(function(x) iconv(x, to="UTF-8", sub="byte")),mc.cores=2)
+
+#1 removing number
+textCorpus <- tm_map(textCorpus, content_transformer(removeNumbers))
+
+#2 removing punctuation
+textCorpus <- tm_map(textCorpus, content_transformer(removePunctuation), preserve_intra_word_dashes=TRUE)
+
+#3 converting to lowercase
+textCorpus <- tm_map(textCorpus, content_transformer(tolower), lazy = TRUE)
+
+#4 removing stop words in English (a, as, at, so, etc.)
+textCorpus <- tm_map(textCorpus, removeWords, stopwords("english"))
+
+#5 Removing common word endings (e.g., ???ing???, ???es???, ???s???)
+textCorpus <- tm_map(textCorpus, stemDocument) 
+
+#6 Stripping unnecesary whitespace from document
+textCorpus <- tm_map(textCorpus, stripWhitespace) 
+
+# removing URLs 
+removeURL <- function(x) gsub("http[[:alnum:]]*", "", x) 
+textCorpus <- tm_map(textCorpus, content_transformer(removeURL))
+rm(removeURL)
+
+# Removing Profanity Words
+# profanityWords <- read.table("~/Desktop/Capstone2/MilestoneReport/profanityfilter.txt", header = FALSE)
+# cleanSample <- tm_map(cleanSample, removeWords, profanityWords)
+      
+## Convert all to plain text document
+textCorpus <- tm_map(textCorpus, PlainTextDocument) 
+
+```
+
+### 6.1 - Saving the final Corpus as .RDS
+
+```{r, eval=FALSE, echo=FALSE}
+## Saving the final corpus
+saveRDS(textCorpus, file = "~/Desktop/DATA-SCIENCE-CAPSTONE/finalCorpus.RDS")
+finalCorpus <- readRDS("~/Desktop/DATA-SCIENCE-CAPSTONE/finalCorpus.RDS")
+finalCorpusDF <-data.frame(text=unlist(sapply(finalCorpus,`[`, "content")),stringsAsFactors = FALSE)
+```
+
+
+## 7 - TOKENIZATION
+
+Tokenize the corpus to determine the words and phrases frequency.
+In Natural Language Processing (NLP) an *n*-gram is a contiguous sequence of n items from a given sequence of text or speech.
+Unigrams are single words. Bigrams are two words combinations. Trigrams are three word combinations.
+The following function is used to extract 1-grams, 2-grams and 2-grams from the cleaned text corpus.
+Generating uni, bi and tri N-gram.
+
+By the usage of the tokenizer function for the *n*-grams a distribution of the following top 10 words and word combinations can be inspected. 
+Unigrams are single words, while bigrams are two word combinations and trigrams are three word combinations.
+
+
+
+## 8 - NEW STEPS
+
+
+
+
+
+
