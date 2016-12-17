@@ -1,6 +1,6 @@
 ---
 title: "Milestone Report Coursera Data Science Capstone"
-author: "Jose Antonio (joseantonio@me.com"
+author: "Jose Antonio (joseantonio@me.com")
 date: "10/11/2016"
 output: html_document
 ---
@@ -12,10 +12,14 @@ knitr::opts_chunk$set(echo = TRUE)
 ## 1-INTRODUCTION
 
 This Milestone Report is about exploratory data analysis of the Capstone Project of the Data Science Coursera specialization.
-Coursera and SwitfKey are partnering at this project, that apply data science in area of natural language.
-The project use a large text corpus of documents to predict the next word on preceding input.  
-The data will be extracted and cleaned from these documents to be used with Shiny application.
-Here, we have some informations about the corpus of data and prepare a plan to create the predictive model.
+
+Coursera and SwitfKey are partnering on this project; that apply data science in the area of natural language.
+
+The project uses a large text corpus of documents to predict the next word on preceding input. 
+
+The data is extracted and cleaned from files and used with the Shiny application.
+
+Here, we have some information about the corpus of data and prepare a plan to create the predictive model.
 
 ## 2-R LIBRARIES
 
@@ -29,22 +33,19 @@ library(rJava)
 library(RWeka) # tokenizer - create unigrams, bigrams, trigrams
 library(RWekajars)
 library(SnowballC) # Stemming
-library(qdap); library(qdapTools); library(qdapRegex); library(qdapDictionaries)
-library(ggplot2) #visualization
 library(RColorBrewer) # Color palettes
-library(wordcloud) # word cloud generator (not used)
-library(ngramrr)
-library(magrittr)
+library(qdap)
+library(ggplot2) #visualization
 ```
 
 ## 3 - LOOKING FOR THE DATA 
-The data is from HC Corpora with access to 4 languages, but only English will be used. The dataset has 3 files.
+The data is from HC Corpora with access to 4 languages, but only English will be used. The dataset has three files.
 
  * en_US.blogs.txt
  * en_US.news.txt
  * en_US.twitter.txt.
 
-The data was loaded from Coursera Link to local machine and will be read from local disk. 
+The data was loaded from Coursera Link to local machine and will be read from local disk.
 
 ```{r, echo=TRUE, message=FALSE, warning=FALSE}
 blogsURL <- file("en_US.blogs.txt", open="rb") # open for reading in binary mode
@@ -56,12 +57,13 @@ news <- readLines(newsURL, encoding = "UTF-8", skipNul=TRUE)
 twitterURL <- file("en_US.twitter.txt", open = "rb") # open for reading in binary mode
 twitter <- readLines(twitterURL, encoding = "UTF-8", skipNul=TRUE)
 
-rm(blogsURL, newsURL, twitterURL)
+## close(blogsURL, newsURL, twitterURL)
+## rm(blogsURL, newsURL, twitterURL)
 ```
 
 ## 4 - SOME DATA STATISTICS
 
-Lets evaluate the Data loaded with
+Let's evaluate the Data loaded from Blogs, News and Twitter files.
 
 ```{r, echo=TRUE}
 ## Size of Files
@@ -88,85 +90,73 @@ max(nchar(twitter)) # [1] 140
 
 ### 4.1 - DATA SUMMARY OBSERVED
 
-* Each file has more than 150 MB.
+* Each file has more than 200 MB.
 * The number of words is more than 30 million per file.
-* Twitter is the big file with more lines, and less words per line (as expected 140 lines limited).
-* Blogs are text file with sentences and has the longest line with 40,833 characters.
-* News are text file with senteces.
-* Twitter are text file with sentences until 140 characters as would expected and with 2,360,148 number of lines.
+* Twitter is the big file with more lines, and fewer words per line (as expected 140 lines limited).
+* Blogs are the text file with sentences and has the longest line with 40,833 characters.
+* News are the text file with sentences.
+* Twitter are the text file with sentences until 140 characters as would be expected and with 2,360,148 number of lines.
 
 
 ## 5 - DATA SAMPLE (subset)
 
-To make the analyse and prediction, the data is very large, and could have poor perfomance in mobile.
+The data is enormous and could have poor performance in mobile.
 So, we must create a subset of the data considering the limited resources for test and application.
-A data sample was generated from the three files observed.
-
+Let's generate a data sample from the three files (blogs, news, Twitter)
 
 ```{r, eval=FALSE}
-sTwitter <- sample(twitter, size = 5000, replace = TRUE)
-sBlogs <- sample(blogs, size = 5000, replace = TRUE)
-sNews <- sample(news, size = 5000, replace = TRUE)
+set.seed(65364)
+sTwitter <- sample(twitter, size = 30000, replace = TRUE)
+sBlogs <- sample(blogs, size = 10000, replace = TRUE)
+sNews <- sample(news, size = 10000, replace = TRUE)
 sampleTotal <- c(sTwitter, sBlogs, sNews)
 length(sampleTotal)
-
-rm(sBlogs, sNews, sTwitter)
-rm(blogs, news, twitter)
 ```
 
-The Sample chooses has 15,000 lines, 5,000 from each of the files.
+The new file is composed of 1/3 of lines from each one of the records selected (from blogs, news, and Twitter)
 
 ```{r, eval=FALSE, echo=FALSE}
 ## Saving the Sample Total
-writeLines(sampleTotal, "sampleTotal.txt")
-rm(sampleTotal)
+writeLines(sampleTotal, "./finaldata/sampleTotal.txt")
 ```
 
 
 ## 6 - CORPUS AND CLEANING THE DATA
 
-The final text data needs to be cleaned to be used at the word prediction.
+The final text data needs to be cleaned to be used in the word prediction algorithm
 The objective is to create a cleaned Corpus file or sample of text. 
-This Corpus will be cleaned using methods as removing whitespaces, removing numbers, UTR, punctuation and so on.
+This Corpus will be cleaned using methods as removing whitespaces,  numbers, UTR, punctuation and so on.
 The library used here is TM that loads the corpus into memory and allow calls to the methods to clean the data.
 
-Profanity words have to be erased from the dataset.
-
-### 6.1 - Clean the Data
+### 6.1 - Cleaning the Data
 ```{r, eval=FALSE, echo=TRUE}
 ## Using the TM Package to clean the Corpus Text
-textCon <- file("sampleTotal.txt")
+textCon <- file("./finaldata/sampleTotal.txt")
 textCorpus <- readLines(textCon)
+
+#textCorpus <- VCorpus(DirSource("./finaldata", encoding = "UTF-8"))
 
 ## Tm reading the text as lists.
 textCorpus <- Corpus(VectorSource(textCorpus))
-# rm(textCon)
 
 ## Using the TM Package to clean the text
-# textCorpus <- tm_map(textCorpus, content_transformer(function(x) iconv(x, to="UTF-8", sub="byte")),mc.cores=1)
+textCorpus <- tm_map(textCorpus, content_transformer(function(x) iconv(x, to="UTF-8", sub="byte")),mc.cores=1)
 
-#1 removing numbers
-textCorpus <- tm_map(textCorpus, content_transformer(removeNumbers))
-textCorpus[[1]]$content
-
-#2 removing punctuation
-textCorpus <- tm_map(textCorpus, content_transformer(removePunctuation), preserve_intra_word_dashes=TRUE)
-textCorpus[[1]]$content
-
-#3 converting to lowercase
+## converting to lowercase
 textCorpus <- tm_map(textCorpus, content_transformer(tolower), lazy = TRUE)
-textCorpus[[2]]$content
 
-#4 removing stop words in English (a, as, at, so, etc.)
+## removing punctuation
+textCorpus <- tm_map(textCorpus, content_transformer(removePunctuation), preserve_intra_word_dashes=TRUE)
+
+## removing numbers
+textCorpus <- tm_map(textCorpus, content_transformer(removeNumbers))
+
+## removing URLs 
+removeURL <- function(x) gsub("http[[:alnum:]]*", "", x) 
+textCorpus <- tm_map(textCorpus, content_transformer(removeURL))
+
+## removing stop words in English (a, as, at, so, etc.)
 textCorpus <- tm_map(textCorpus, removeWords, stopwords("english"))
-textCorpus[[2]]$content
-
-#5 Removing common word endings (e.g., ???ing???, ???es???, ???s???)
-textCorpus <- tm_map(textCorpus, stemDocument) 
-textCorpus[[3]]$content
-
-#6 Stripping unnecesary whitespace from document
-textCorpus <- tm_map(textCorpus, stripWhitespace) 
 textCorpus[[1]]$content
 textCorpus[[2]]$content
 textCorpus[[3]]$content
@@ -174,79 +164,157 @@ textCorpus[[4]]$content
 textCorpus[[5]]$content
 textCorpus[[6]]$content
 
-# removing URLs 
-removeURL <- function(x) gsub("http[[:alnum:]]*", "", x) 
-textCorpus <- tm_map(textCorpus, content_transformer(removeURL))
-rm(removeURL)
-
-# Removing Profanity Words
-# profanityText <- read.table("profanityfilter.txt", header = FALSE)
-# textCorpus <- tm_map(textCorpus, removeWords, profanityText)
-# rm(profanityText)
+## Stripping unnecesary whitespace from document
+textCorpus <- tm_map(textCorpus, stripWhitespace) 
       
 ## Convert Corpus to plain text document
 textCorpus <- tm_map(textCorpus, PlainTextDocument) 
 textCorpus[[1]]$content
+textCorpus[[2]]$content
+textCorpus[[3]]$content
+textCorpus[[4]]$content
+textCorpus[[5]]$content
+
+# rm(textCon)
+# rm(removeURL)
+
+## Saving the final corpus
+saveRDS(textCorpus, file = "./finaldata/finalCorpus.RData")
+
 ```
 
-### 6.1 - Saving the final Corpus as .RDS 
+### 6.1 - Reading final Corpus as data.frame
 
 ```{r, eval=FALSE, echo=FALSE}
-## Saving the final corpus
-saveRDS(textCorpus, file = "finalCorpus.RData")
-
-finalCorpusMem <- readRDS("finalCorpus.RData")
-finalCorpusMem[[1]]$content
-
+finalCorpusMem <- readRDS("./finaldata/finalCorpus.RData")
+## data framing finalcorpus
 finalCorpus <-data.frame(text=unlist(sapply(finalCorpusMem,`[`, "content")),stringsAsFactors = FALSE)
 head(finalCorpus)
+# removing vars not used
 
+rm(blogs, news, twitter); rm(sNews, sTwitter); rm(sBlogs)
+rm(textCorpus, textCon, finalCorpusMem, removeURL, blogsURL, newsURL, twitterURL, sampleTotal)
 ```
 
 
 ## 7 - TOKENIZATION
 
-Lets nos read the text to break it into words and sentences, and to turn it into n-grams. These are all called tokenization, because we are breaking up the text into units of meaning, called tokens.
+Let's read the text to break it into words and sentences, and to turn it into n-grams. These are all called tokenization because we are breaking up the text into units of meaning, called tokens.
 
-In Natural Language Processing (NLP) an *n*-gram is a contiguous sequence of n items from a given sequence of text or speech. Unigrams are single words. Bigrams are two words combinations. Trigrams are three word combinations.
+In Natural Language Processing (NLP),  *n*-gram is a contiguous sequence of n items from a given sequence of text or speech. Unigrams are single words. Bigrams are two words combinations. Trigrams are three-word combinations.
 
 The tokenizer method is allowed in R using the package RWeka. The following function is used to extract 1-grams, 2-grams and 3 grams from the text Corpus using RWeka.
 
+* 7.1 - Obtaining the uniGrams
+
 ```{r, echo=TRUE}
 # Tokenizer function to get unigrams
-uniGrams <- NGramTokenizer(finalCorpus, Weka_control(min = 1, max = 1,delimiters = " \\r\\n\\t.,;:\"()?!"))
-uniGrams <- data.frame(table(uniGrams))
-uniGrams <- uniGrams[order(uniGrams$Freq,decreasing = TRUE),]
-head(uniGrams)
-# saving file to prediction 
-saveRDS(uniGrams, file = "./app/unigram.RData")
+unigram <- NGramTokenizer(finalCorpus, Weka_control(min = 1, max = 1,delimiters = " \\r\\n\\t.,;:\"()?!"))
+unigram <- data.frame(table(unigram))
+unigram <- unigram[order(unigram$Freq,decreasing = TRUE),]
+names(unigram) <- c("word1", "freq")
+write.csv(unigram[unigram$freq > 1,],"unigram.csv",row.names=F)
+unigram <- read.csv("unigram.csv",stringsAsFactors = F)
+saveRDS(unigram, file = "unigram.RData")
 ``` 
+
+* 7.2 - Obtaining the biGrams
 
 ```{r, echo=TRUE}
 # Tokenizer function to get bigrams
-biGgrams <- NGramTokenizer(finalCorpus, Weka_control(min = 2, max = 2,delimiters = " \\r\\n\\t.,;:\"()?!"))
-biGgrams <- data.frame(table(biGgrams))
-biGgrams <- biGgrams[order(biGgrams$Freq,decreasing = TRUE),]
-head(biGgrams)
-saveRDS(biGgrams, file = "./app/bigram.RData")
+bigram <- NGramTokenizer(finalCorpus, Weka_control(min = 2, max = 2,delimiters = " \\r\\n\\t.,;:\"()?!"))
+bigram <- data.frame(table(bigram))
+bigram <- bigram[order(bigram$Freq,decreasing = TRUE),]
+
+names(bigram) <- c("words","freq")
+bigram$words <- as.character(bigram$words)
+
+str2 <- strsplit(bigram$words,split=" ")
+
+bigram <- transform(bigram, 
+                    one = sapply(str2,"[[",1),   
+                    two = sapply(str2,"[[",2))
+
+bigram <- data.frame(word1 = bigram$one,word2 = bigram$two,freq = bigram$freq,stringsAsFactors=FALSE)
+
+## saving files 
+write.csv(bigram[bigram$freq > 1,],"bigram.csv",row.names=F)
+bigram <- read.csv("bigram.csv",stringsAsFactors = F)
+saveRDS(bigram,"bigram.RData")
 ``` 
 
+* 7.3 - Obtaining the triGrams
 
 ```{r, echo=TRUE}
 # Tokenizer function to get trigrams
-triGgrams <- NGramTokenizer(finalCorpus, Weka_control(min = 3, max = 3,delimiters = " \\r\\n\\t.,;:\"()?!"))
-triGgrams <- data.frame(table(triGgrams))
-triGgrams <- triGgrams[order(triGgrams$Freq,decreasing = TRUE),]
-head(triGgrams)
-saveRDS(triGgrams, file = "./app/trigram.RData")
+trigram <- NGramTokenizer(finalCorpus, Weka_control(min = 3, max = 3,delimiters = " \\r\\n\\t.,;:\"()?!"))
+trigram <- data.frame(table(trigram))
+trigram <- trigram[order(trigram$Freq,decreasing = TRUE),]
+head(trigram)
+names(trigram) <- c("words","freq")
+head(trigram)
+##################### 
+trigram$words <- as.character(trigram$words)
+str3 <- strsplit(trigram$words,split=" ")
+trigram <- transform(trigram,
+                     one = sapply(str3,"[[",1),
+                     two = sapply(str3,"[[",2),
+                     three = sapply(str3,"[[",3))
+
+# trigram$words <- NULL
+trigram <- data.frame(word1 = trigram$one,word2 = trigram$two, 
+                      word3 = trigram$three, freq = trigram$freq,stringsAsFactors=FALSE)
+# saving files
+write.csv(trigram[trigram$freq > 1,],"trigram.csv",row.names=F)
+trigram <- read.csv("trigram.csv",stringsAsFactors = F)
+saveRDS(trigram,"trigram.RData")
+
+``` 
+
+* 7.4 - Obtaining the quadGrams
+
+```{r, echo=TRUE}
+# Tokenizer function to get quadgrams
+quadgram <- NGramTokenizer(finalCorpus, Weka_control(min = 4, max = 4,delimiters = " \\r\\n\\t.,;:\"()?!"))
+quadgram <- data.frame(table(quadgram))
+quadgram <- quadgram[order(quadgram$Freq,decreasing = TRUE),]
+head(quadgram)
+
+names(quadgram) <- c("words","freq")
+quadgram$words <- as.character(quadgram$words)
+
+str4 <- strsplit(quadgram$words,split=" ")
+quadgram <- transform(quadgram,
+                      one = sapply(str4,"[[",1),
+                      two = sapply(str4,"[[",2),
+                      three = sapply(str4,"[[",3), 
+                      four = sapply(str4,"[[",4))
+
+# quadgram$words <- NULL
+quadgram <- data.frame(word1 = quadgram$one,
+                       word2 = quadgram$two, 
+                       word3 = quadgram$three, 
+                       word4 = quadgram$four, 
+                       freq = quadgram$freq, stringsAsFactors=FALSE)
+# saving files
+write.csv(quadgram[quadgram$freq > 1,],"quadgram.csv",row.names=F)
+quadgram <- read.csv("quadgram.csv",stringsAsFactors = F)
+saveRDS(quadgram,"quadgram.RData")
 ``` 
 
 
-## 8 - NEW STEPS
+## 8 - NEXT STEPS
 
+### 8.1 - Considerations 
 
+* All the process from reading the file, cleaning and creating the n-grams is time-consuming for your computer.
+* NLP uses intensive computer resource and is necessary a lot of tests get n-grams efficient keeping minimum files sizes.
+* The techniques of removing words (cleaning) sometimes is not precise as we can suppose.
+* Increasing the quality of n-gram tokenization could be critical to prediction accuracy at the prediction algorithm.
 
+### 8.1 - Next Steps
 
-
-
+* Build a Shiny app to allow the user input the word to obtain a suggestion of the next word. 
+* Develop the prediction algorithm implemented in Shiny app. 
+* Prepare a pitch about the app and publish it at "shinyapps.io" server.
 
