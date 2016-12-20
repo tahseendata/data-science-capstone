@@ -11,6 +11,8 @@ The final project was concluded with one Shiny application and a Pitch using R-P
 
 Links to evaluate the Project:
 
+* The Milestone Project from Week two can be foun in this link:  [Milestone Project](http://rpubs.com/joseantonio/236625)
+
 * All the files, report and presentations can be found in this GitHub repo: 
 [https://github.com/joseantonio11/data-science-capstone](https://github.com/joseantonio11/data-science-capstone)
 
