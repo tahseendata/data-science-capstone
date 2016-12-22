@@ -17,7 +17,7 @@ Links to evaluate the Project:
 [https://github.com/joseantonio11/data-science-capstone](https://github.com/joseantonio11/data-science-capstone)
 
 * The Word Prediction App can be found on shinyapps.io:
-[https://joseantonio.shinyapps.io/PROJETO-FINAL/](https://joseantonio.shinyapps.io/PROJETO-FINAL/)
+[https://joseantonio.shinyapps.io/PROJETO-FINAL/](https://joseantonio.shinyapps.io/milestone/)
 
 * This pitch deck with a short presentation for the capstone application is located here: 
 [https://rpubs.com/joseantonio/reproducible-research-project2](https://rpubs.com/joseantonio/reproducible-research-project2)
