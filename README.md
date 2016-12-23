@@ -13,9 +13,6 @@ Links to evaluate the Project:
 
 * The Milestone Project from Week two can be foun in this link:  [Milestone Project](http://rpubs.com/joseantonio/236625)
 
-* All the files, report and presentations can be found in this GitHub repo: 
-[https://github.com/joseantonio11/data-science-capstone](https://github.com/joseantonio11/data-science-capstone)
-
 * The Word Prediction App can be found on shinyapps.io:
 [https://joseantonio.shinyapps.io/PROJETO-FINAL/](https://joseantonio.shinyapps.io/milestone/)
 
