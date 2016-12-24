@@ -17,5 +17,5 @@ Links to evaluate the Project:
 [https://joseantonio.shinyapps.io/PROJETO-FINAL/](https://joseantonio.shinyapps.io/milestone/)
 
 * This pitch deck with a short presentation for the capstone application is located here: 
-[https://rpubs.com/joseantonio/reproducible-research-project2](https://rpubs.com/joseantonio/reproducible-research-project2)
+[https://rpubs.com/joseantonio/reproducible-research-project2](http://rpubs.com/joseantonio/capstone-data-science)
 
