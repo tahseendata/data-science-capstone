@@ -17,5 +17,5 @@ Links to evaluate the Project:
 [Shine App](https://joseantonio.shinyapps.io/milestone/)
 
 * This pitch deck with a short presentation for the capstone application is located here: 
-[Data Science Capston](http://rpubs.com/joseantonio/capstone-data-science)
+[Data Science Capstone](http://rpubs.com/joseantonio/capstone-data-science)
 
