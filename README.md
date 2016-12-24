@@ -14,8 +14,8 @@ Links to evaluate the Project:
 * The Milestone Project from Week two can be foun in this link:  [Milestone Project](http://rpubs.com/joseantonio/236625)
 
 * The Word Prediction App can be found on shinyapps.io:
-[https://joseantonio.shinyapps.io/PROJETO-FINAL/](https://joseantonio.shinyapps.io/milestone/)
+[Shine App](https://joseantonio.shinyapps.io/milestone/)
 
 * This pitch deck with a short presentation for the capstone application is located here: 
-[https://rpubs.com/joseantonio/reproducible-research-project2](http://rpubs.com/joseantonio/capstone-data-science)
+[Data Science Capston](http://rpubs.com/joseantonio/capstone-data-science)
 
