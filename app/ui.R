@@ -4,7 +4,7 @@
 library(shiny)
 library(markdown)
 
-################ 
+## SHINY UI
 shinyUI(
         fluidPage(
                 titlePanel("FINAL PROJECT - DATA SCIENCE CAPSTONE - USING NLP TO PREDICT WORDS"),
@@ -12,13 +12,13 @@ shinyUI(
                         sidebarPanel(
                                 helpText("ENTER A WORD, TEXT OR A SENTENCE TO PREVIEW NEXT WORD PREDICTION"),
                                 hr(),
-                                textInput("inputString", "ENTER THE TEXT / WORD / SENTENCE HERE",value = ""),
+                                textInput("inputText", "ENTER THE TEXT / WORD / SENTENCE HERE",value = ""),
                                 hr(),
-                                helpText("1 - AFTER ENTER THE WORD WILL BE DISPLAYED THE PREDICTED NEXT WORD", 
+                                helpText("1 - AFTER THE TEXT INPUT THE PREDICT NEXT WORD WILL BE DISPLAYED.", 
                                          hr(),
-                                         "2 - YOU HAVE TO ENTER A PARTIALLY TEXT /SENTENCE TO DISPLAY NEXT WORD PREDICTION",
+                                         "2 - YOU HAVE TO ENTER A PARTIALLY TEXT /SENTENCE TO SHOW THE NEXT WORD PREDICTION.",
                                          hr(),
-                                         "3 - THE PREDICTED WORD IS SHOWN AT THE PREDICT NEXT WORD TEXTBOX."),
+                                         "3 - THE FORWARD WORD IS SHOWED AT THE PREDICT NEXT WORD TEXT BOX ON THE RIGHT SIDE"),
                                 hr(),
                                 hr()
                                 ),
@@ -26,14 +26,20 @@ shinyUI(
                         h2("FOLLOW THE PREDICT NEXT WORD AT THIS BOX"),
                         verbatimTextOutput("prediction"),
                         strong("WORD / TEXT / SENTENCE ENTERED:"),
-                        strong(textOutput('phrase1')),
+                        strong(code(textOutput('sentence1'))),
                         br(),
                         strong("USING SEARCH AT N-GRAMS TO SHOW NEXT WORD:"),
-                        strong(textOutput('phrase2'))
+                        strong(code(textOutput('sentence2'))),
+                        hr(),
+                        hr(),
+                        hr(),
+                        img(src = 'swiftkey_logo.jpg', height = 101, width = 498),
+                        hr(),
+                        hr(),
+                        img(src = 'coursera_logo.png', height = 122, width = 467),
+                        hr()
                         )
                 )
         )
 )
-
-
 
