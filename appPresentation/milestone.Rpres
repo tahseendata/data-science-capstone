@@ -5,7 +5,7 @@ date: December 1027
 #autosize: true
 
 * This Pitch is an application that uses Natural Language Processing techniques for predicting next word.
-* The Shiny application can be visualized at the link: [data science application](https://joseantonio.shinyapps.io/milestone/)
+* The Shiny application can be visualized at the link: [data science application](https://joseantonio.shinyapps.io/capstone-shiny-app/)
 * The Capstone is a cooperation between Coursera and SwiftKey company.
 
 OVERVIEW
@@ -52,7 +52,7 @@ ADDITIONAL COMMENTS AND LINKS
 
 * The final report comes from the link [Milestone Report](http://rpubs.com/joseantonio/236625). 
 
-* The next word prediction app is hosted on shinyapps.io: [Shiny app](https://joseantonio.shinyapps.io/milestone/)
+* The next word prediction app is hosted on shinyapps.io: [Shiny app](https://joseantonio.shinyapps.io/capstone-shiny-app/)
 
 * This Pitch slide deck is located in RPubs at [Pitch Deck](http://rpubs.com/joseantonio/capstone-data-science)
 

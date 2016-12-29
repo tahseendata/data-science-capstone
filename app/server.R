@@ -1,50 +1,82 @@
 ## Capstone: Coursera Data Science
 ## Final Project
+## joseantonio
 
+# SHINY SERVER 
 library(shiny); library(stringr); library(tm)
 
-# Load Quadgram,Trigram & Bigram Data frame files
-quadgram <- readRDS("quadgram.RData")
-trigram <- readRDS("trigram.RData")
-bigram <- readRDS("bigram.RData")
-mesg <- ""
+# Loading bigram, trigram and quadgram frequencies words matrix frequencies
+bg <- readRDS("bigram.RData"); tg <- readRDS("trigram.RData"); qd <- readRDS("quadgram.RData")
 
-# Cleaning of user input before predicting the next word
+names(bg)[names(bg) == 'word1'] <- 'w1'; names(bg)[names(bg) == 'word2'] <- 'w2';
+names(tg)[names(tg) == 'word1'] <- 'w1'; names(tg)[names(tg) == 'word2'] <- 'w2'; names(tg)[names(tg) == 'word3'] <- 'w3';
+names(qd)[names(qd) == 'word1'] <- 'w1'; names(qd)[names(qd) == 'word2'] <- 'w2'; names(qd)[names(qd) == 'word3'] <- 'w3'
+names(qd)[names(qd) == 'word4'] <- 'w4';
+message <- "" ## cleaning message
 
-predictNextWord <- function(x) {
-  xclean <- removeNumbers(removePunctuation(tolower(x)))
-  xs <- strsplit(xclean, " ")[[1]]
-
-  if (length(xs)>= 3) {
-    xs <- tail(xs,3)
-    if (identical(character(0),head(quadgram[quadgram$word1 == xs[1] & quadgram$word2 == xs[2] & quadgram$word3 == xs[3], 4],1))){
-      predictNextWord(paste(xs[2],xs[3],sep=" "))
-    }
-    else {mesg <<- "Prediction using Quadrigam"; head(quadgram[quadgram$word1 == xs[1] & quadgram$word2 == xs[2] & quadgram$word3 == xs[3], 4],1)}
-  }
-  else if (length(xs) == 2){
-    xs <- tail(xs,2)
-    if (identical(character(0),head(trigram[trigram$word1 == xs[1] & trigram$word2 == xs[2], 3],1))) {
-      predictNextWord(xs[2])
-    }
-    else {mesg<<- "Prediction using Trigram "; head(trigram[trigram$word1 == xs[1] & trigram$word2 == xs[2], 3],1)}
-  }
-  else if (length(xs) == 1){
-    xs <- tail(xs,1)
-    if (identical(character(0),head(bigram[bigram$word1 == xs[1], 2],1))) {mesg<<-"No word found. -THE- is word returned"; head("the",1)}
-    else {mesg <<- "Prediction using Bigram "; head(bigram[bigram$word1 == xs[1],2],1)}
-  }
+## Function predicting the next word
+predictWord <- function(the_word) {
+        word_add <- stripWhitespace(removeNumbers(removePunctuation(tolower(the_word),preserve_intra_word_dashes = TRUE)))
+        # testing print("word_add")
+        the_word <- strsplit(word_add, " ")[[1]]
+        # testing print("the_word")
+        n <- length(the_word)
+        # testing print(n)
+        
+        ########### check Bigram
+        if (n == 1) {the_word <- tail(the_word,1); functionBigram(the_word)}
+        
+        ################ check trigram
+        else if (n == 2) {the_word <- tail(the_word,2); functionTrigram(the_word)}
+        
+         ############### check quadgram
+        else if (n >= 3) {the_word <- tail(the_word,3); functionQuadgram(the_word)}
 }
+########################################################################
+functionBigram <- function(the_word) {
+        if (identical(character(0),head(bg[bg$w1 == the_word[1], 2], 1))) {
+                message<<-"If no word found the most used pronoun 'it' in English will be returned" 
+                head("it",1)
+                }
+        else {
+                message <<- "Predicting the Word using Bigram Matrix  "
+                head(bg[bg$w1 == the_word[1],2], 1)}
+}
+########################################################################
+functionTrigram <- function(the_word) {
+        if (identical(character(0),head(tg[tg$w1 == the_word[1]
+                                           & tg$w2 == the_word[2], 3], 1))) {
+                predictWord(the_word[2])
+                }
+        else {
+                message<<- "Predicting the Word using Trigram Matrix "
+                head(tg[tg$w1 == the_word[1]
+                        & tg$w2 == the_word[2], 3], 1)}        
+}
+########################################################################
+functionQuadgram <- function(the_word) {
+        if (identical(character(0),head(qd[qd$w1 == the_word[1]
+                                          & qd$w2 == the_word[2]
+                                          & qd$w3 == the_word[3], 4], 1))) {
+                predictWord(paste(the_word[2],the_word[3],sep=" "))
+                }
+        else {
+                message <<- "Predicting the Word using Quadgram Matrix"
+                head(qd[qd$w1 == the_word[1] 
+                        & qd$w2 == the_word[2]
+                        & qd$w3 == the_word[3], 4], 1)}       
+}
+#################################################
 
+## ShineServer code to call the function predictWord
 shinyServer(function(input, output) {
-    output$prediction <- renderPrint({
-    result <- predictNextWord(input$inputString)
-    output$phrase2 <- renderText({mesg})
-    result
-  });
-  
-  output$phrase1 <- renderText({
-    input$inputString});
+        output$prediction <- renderPrint({
+                result <- predictWord(input$inputText)
+                output$sentence2 <- renderText({message})
+                result
+                });
+        output$sentence1 <- renderText({
+                input$inputText});
 }
 )
 

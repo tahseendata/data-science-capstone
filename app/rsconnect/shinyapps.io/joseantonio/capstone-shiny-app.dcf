@@ -1,0 +1,11 @@
+name: capstone-shiny-app
+title: capstone-shiny-app
+account: joseantonio
+server: shinyapps.io
+appId: 147274
+bundleId: 663899
+url: https://joseantonio.shinyapps.io/capstone-shiny-app/
+when: 1483038791.32307
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .RData|.Rapp.history
